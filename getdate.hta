@@ -1,0 +1,604 @@
+<html>
+<head>
+<title>GetDate Date Calculator</title>
+<HTA:APPLICATION 
+	ID="GetDate"
+	VERSION="0.13 Beta"
+	APPLICATIONNAME="GetDate"
+	SYSMENU="yes"
+	MAXIMIZEBUTTON="no"
+	MINIMIZEBUTTON="yes"
+	BORDER="thin"
+	INNERBORDER="no"
+	SCROLL="no"
+	SINGLEINSTANCE="yes"
+	WINDOWSTATE="maximize"
+>
+</head>
+
+<script language="VBScript">
+
+Dim arrDoW( 6 ), arrMonth( 11 ), blnDebug, blnLeapYear, numOldDay, numOldWeek, numOldYear, numOldMonth, numOldDoW, numVersionMessageSize, sysFirstDoW, sysFirstWoW
+
+numVerMsgSize = 0
+
+
+' Specify the first day of the week;
+' valid values are: vbUseSystemDayOfWeek,
+' vbSunday, vbMonday .. vbSaturday
+sysFirstDoW = vbUseSystemDayOfWeek
+
+' Specify how to decide which week is week 1;
+' valid values are: vbUseSystem, vbFirstJan1,
+' vbFirstFourDays, vbFirstFullWeek
+sysFirstWoY = vbUseSystem
+
+
+Sub CheckDate()
+	If IsDate( MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value ) Then
+		numOldDoW   = MyDoW.Value
+		numOldDay   = MyDay.Value
+		numOldMonth = MyMonth.Value
+		numOldYear  = MyYear.Value
+		numOldWeek  = MyWeek.Value
+	Else
+'		MyDoW.Value   = numOldDoW
+'		MyDay.Value   = numOldDay
+'		MyMonth.Value = numOldMonth
+'		MyYear.Value  = numOldYear
+'		MyWeek.Value  = numOldWeek
+	End If
+End Sub
+
+
+Sub CheckUpdate( )
+	' Change cursor to hourglass while checking for update
+	Document.Body.Style.Cursor = "wait"
+
+	strLatestVer  = TextFromHTML( "http://www.robvanderwoude.com/updates/getdate.txt" )
+	lenLatestVer  = Len( strLatestVer )
+	If lenLatestVer = 4 Then
+		strCurrentVer = Split( GetDate.Version )(0)
+		If strLatestVer < strCurrentVer Then
+			Update.InnerHTML = "<P>You seem to be using an invalid version (" & strCurrentVer _
+			                 & ") of the GetDate Date Calculator.<BR>The latest valid version is " _
+			                 & strLatestVer & " and it is available " _
+			                 & "<A HREF=""http://www.robvanderwoude.com/updates/getdate.html"">" _
+			                 & "<FONT COLOR=""Red"">here</FONT></A>.</P>"
+			numVerMsgSize    = 85
+		End If
+		If strLatestVer > strCurrentVer Then
+			Update.InnerHTML = "<P>You are using version " & strCurrentVer _
+			                 & " of the GetDate Date Calculator.<BR>An update to version " _
+			                 & strLatestVer & " is available " _
+			                 & "<A HREF=""http://www.robvanderwoude.com/updates/getdate.html"">" _
+			                 & "<FONT COLOR=""Red"">here</FONT></A>.</P>"
+			numVerMsgSize    = 85
+		End If
+	End If
+
+	' Change cursor back to default
+	Document.Body.Style.Cursor = "default"
+End Sub
+
+
+Sub Debug( myDate )
+	Dim intDoW, IntMonth
+	If blnDebug = True Then
+		intDoW   = CInt( DatePart( "w", myDate, sysFirstDoW, sysFirstWoY ) ) - 1
+		IntMonth = CInt( DatePart( "m", myDate, sysFirstDoW, sysFirstWoY ) )
+		DebugTextArea.Value = "Weekday Number : " & DatePart( "w",    myDate, sysFirstDoW, sysFirstWoY ) & vbCrLf _
+		                    & "Weekday Name   : " & arrDoW( intDoW )                                     & vbCrLf _
+		                    & "Day            : " & DatePart( "d",    myDate, sysFirstDoW, sysFirstWoY ) & vbCrLf _
+		                    & "Month Number   : " & DatePart( "m",    myDate, sysFirstDoW, sysFirstWoY ) & vbCrLf _
+		                    & "Month Name     : " & GetMonth( IntMonth )                                 & vbCrLf _
+		                    & "Year           : " & DatePart( "yyyy", myDate, sysFirstDoW, sysFirstWoY ) & vbCrLf _
+		                    & "Week           : " & DatePart( "ww",   myDate, sysFirstDoW, sysFirstWoY ) & vbCrLf _
+		                    & "Locale Number  : " & GetLocale( )                                         & vbCrLf
+	End If
+End Sub
+
+
+Sub DisplayDate( myDate )
+	MyDoW.Value   = DatePart( "w",    myDate, sysFirstDoW, sysFirstWoY )
+	MyDay.Value   = DatePart( "d",    myDate, sysFirstDoW, sysFirstWoY )
+	MyMonth.Value = DatePart( "m",    myDate, sysFirstDoW, sysFirstWoY )
+	MyYear.Value  = DatePart( "yyyy", myDate, sysFirstDoW, sysFirstWoY )
+	MyWeek.Value  = DatePart( "ww",   myDate, sysFirstDoW, sysFirstWoY )
+End Sub
+
+
+Function GetMonth( myMonth )
+	GetMonth = arrMonth( myMonth - 1 )
+End Function
+
+
+Sub HandleDayChange()
+	myOldDay = numOldDay
+	CheckDate
+	myNewDate = DateAdd( "d", MyDay.Value - myOldDay, myOldDay & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value )
+	DisplayDate myNewDate
+	Debug MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value
+End Sub
+
+
+Sub HandleDoWChange()
+	myOldDoW = numOldDoW
+	CheckDate
+	myNewDate = DateAdd( "d", MyDoW.Value - myOldDoW, MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value )
+	DisplayDate myNewDate
+	Debug myNewDate
+End Sub
+
+
+Sub HandleMonthChange()
+	myOldMonth = numOldMonth
+	CheckDate
+	myNewDate = DateAdd( "m", MyMonth.Value - myOldMonth, MyDay.Value & " " & GetMonth( myOldMonth ) & " " & MyYear.Value )
+	DisplayDate myNewDate
+	Debug MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value
+End Sub
+
+
+Sub HandleWeekChange()
+	myOldWeek = numOldWeek
+	CheckDate
+	myNewDate = DateAdd( "ww", MyWeek.Value - myOldWeek, MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value )
+	DisplayDate myNewDate
+	Debug MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value
+End Sub
+
+
+Sub HandleYearChange()
+	myOldYear     = numOldYear
+	CheckDate
+	myNewDate     = DateAdd( "yyyy", MyYear.Value - myOldYear, MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & myOldYear )
+	MyDoW.Value   = DatePart( "w",    myNewDate, sysFirstDoW, sysFirstWoY )
+	MyDay.Value   = DatePart( "d",    myNewDate, sysFirstDoW, sysFirstWoY )
+	MyMonth.Value = DatePart( "m",    myNewDate, sysFirstDoW, sysFirstWoY )
+	MyYear.Value  = DatePart( "yyyy", myNewDate, sysFirstDoW, sysFirstWoY )
+	MyWeek.Value  = DatePart( "ww",   myNewDate, sysFirstDoW, sysFirstWoY )
+	blnLeapYear   = IsLeapYear( MyYear.Value )
+	Debug MyDay.Value & " " & GetMonth( MyMonth.Value ) & " " & MyYear.Value
+End Sub
+
+
+Function IsLeapYear( myYear )
+	If myYear Mod 4 = 0 Then
+		IsLeapYear = True
+		If myYear Mod 100 = 0 Then
+			IsLeapYear = False
+			If myYear Mod 400 = 0 Then
+				IsLeapYear = True
+			End If
+		End If
+	Else
+		IsLeapYear = False
+	End If
+End Function
+
+
+Sub Locale( )
+	' Populate array and selection list with weekday names in correct language
+	For i = 0 To 6
+		arrDoW( i )             = WeekdayName( i + 1, False, vbUseSystemDayOfWeek )
+		MyDoW.options( i ).Text = arrDoW( i )
+	Next
+
+	' Populate array and selection list with month names in correct language
+	For i = 0 To 11
+		arrMonth( i )             = MonthName( i + 1, False )
+		MyMonth.options( i ).Text = arrMonth( i )
+	Next
+
+	' Translate "week" based on current locale,
+	' as returned by the GetLocale( ) function:
+	'
+	' Afrikaans                                1078
+	' Albanian                                 1052
+	' Arabic - Algeria                         5121
+	' Arabic - Bahrain                        15361
+	' Arabic - Egypt                           3073
+	' Arabic - Iraq                            2049
+	' Arabic - Jordan                         11265
+	' Arabic - Kuwait                         13313
+	' Arabic - Lebanon                        12289
+	' Arabic - Libya                           4097
+	' Arabic - Morocco                         6145
+	' Arabic - Oman                            8193
+	' Arabic - Qatar                          16385
+	' Arabic - Saudi Arabia                    1025
+	' Arabic - Syria                          10241
+	' Arabic - Tunisia                         7169
+	' Arabic - United Arab Emirates           14337
+	' Arabic - Yemen                           9217
+	' Armenian                                 1067
+	' Azeri - Cyrillic                         2092
+	' Azeri - Latin                            1068
+	' Basque                                   1069
+	' Belarusian                               1059
+	' Bulgarian                                1026
+	' Catalan                                  1027
+	' Chinese - China                          2052
+	' Chinese - Hong Kong S.A.R.               3076
+	' Chinese - Macau S.A.R.                   5124
+	' Chinese - Singapore                      4100
+	' Chinese - Taiwan                         1028
+	' Croatian                                 1050
+	' Czech                                    1029
+	' Danish                                   1030
+	' Dutch - Belgium                          2067
+	' Dutch - The Netherlands                  1043
+	' English - Australia                      3081
+	' English - Belize                        10249
+	' English - Canada                         4105
+	' English - Carribbean                     9225
+	' English - Ireland                        6153
+	' English - Jamaica                        8201
+	' English - New Zealand                    5129
+	' English - Phillippines                  13321
+	' English - South Africa                   7177
+	' English - Trinidad                      11273
+	' English - United Kingdom                 2057
+	' English - United States                  1033
+	' Estonian                                 1061
+	' Faroese                                  1080
+	' Farsi                                    1065
+	' Finnish                                  1035
+	' French - Belgium                         2060
+	' French - Canada                          3084
+	' French - France                          1036
+	' French - Luxembourg                      5132
+	' French - Switzerland                     4108
+	' Macedonian                               1071
+	' Gaelic - Ireland                         2108
+	' Gaelic - Scotland                        1084
+	' German - Austria                         3079
+	' German - Germany                         1031
+	' German - Liechtenstein                   5127
+	' German - Luxembourg                      4103
+	' German - Switzerland                     2055
+	' Greek                                    1032
+	' Hebrew                                   1037
+	' Hindi                                    1081
+	' Hungarian                                1038
+	' Icelandic                                1039
+	' Indonesian                               1057
+	' Italian - Italy                          1040
+	' Italian - Switzerland                    2064
+	' Japanese                                 1041
+	' Korean                                   1042
+	' Latvian                                  1062
+	' Lithuanian                               1063
+	' Malay - Brunei                           2110
+	' Malay - Malaysia                         1086
+	' Maltese                                  1082
+	' Marathi                                  1102
+	' Norwegian - Bokm†l                       1044
+	' Norwegian - Nynorsk                      2068
+	' Polish                                   1045
+	' Portuguese - Brazil                      1046
+	' Portuguese - Portugal                    2070
+	' Raeto-Romance                            1047
+	' Romanian - Moldova                       2072
+	' Romanian - Romania                       1048
+	' Russian - Moldova                        2073
+	' Russian                                  1049
+	' Sanskrit                                 1103
+	' Serbian - Cyrillic                       3098
+	' Serbian - Latin                          2074
+	' Setsuana                                 1074
+	' Slovak                                   1051
+	' Slovenian                                1060
+	' Sorbian                                  1070
+	' Spanish - Argentina                     11274
+	' Spanish - Bolivia                       16394
+	' Spanish - Chile                         13322
+	' Spanish - Colombia                       9226
+	' Spanish - Costa Rica                     5130
+	' Spanish - Dominican Republic             7178
+	' Spanish - Ecuador                       12298
+	' Spanish - El Salvador                   17418
+	' Spanish - Guatemala                      4106
+	' Spanish - Honduras                      18442
+	' Spanish - Mexico                         2058
+	' Spanish - Nicaragua                     19466
+	' Spanish - Panama                         6154
+	' Spanish - Paraguay                      15370
+	' Spanish - Peru                          10250
+	' Spanish - Puerto Rico                   20490
+	' Spanish - Spain                          1034
+	' Spanish - Uruguay                       14346
+	' Spanish - Venezuela                      8202
+	' Sutu                                     1072
+	' Swahili                                  1089
+	' Swedish - Finland                        2077
+	' Swedish - Sweden                         1053
+	' Tamil                                    1097
+	' Tatar                                    1092
+	' Thai                                     1054
+	' Tsonga                                   1073
+	' Turkish                                  1055
+	' Ukrainian                                1058
+	' Urdu                                     1056
+	' Uzbek - Cyrillic                         2115
+	' Uzbek - Latin                            1091
+	' Vietnamese                               1066
+	' Xhosa                                    1076
+	' Yiddish                                  1085
+	' Zulu                                     1077
+
+	Select Case GetLocale( )
+		Case 1031 ' German (Germany)
+			Week.InnerHTML = "Woche"
+		Case 1036 ' French (France)
+			Week.InnerHTML = "semaine"
+		Case 1043 ' Dutch (Netherlands)
+			Week.InnerHTML = "week"
+		Case 2055 ' German (Switzerland)
+			Week.InnerHTML = "Woche"
+		Case 2060 ' French (Belgium)
+			Week.InnerHTML = "semaine"
+		Case 2067 ' Dutch (Belgium)
+			Week.InnerHTML = "week"
+		Case 3079 ' German (Austria)
+			Week.InnerHTML = "Woche"
+		Case 3084 ' French (Canada)
+			Week.InnerHTML = "semaine"
+		Case 4103 ' German (Luxembourg)
+			Week.InnerHTML = "Woche"
+		Case 4108 ' French (Switzerland)
+			Week.InnerHTML = "semaine"
+		Case 5127 ' German (Liechtenstein)
+			Week.InnerHTML = "Woche"
+		Case 5132 ' French (Luxembourg)
+			Week.InnerHTML = "semaine"
+		Default ' English (UK)
+			Week.InnerHTML = "Week"
+	End Select
+End Sub
+
+
+Sub RestoreWindowSize()
+	If blnDebug = True Then
+		window.ResizeTo 520, 430 + numVerMsgSize
+	Else
+		window.ResizeTo 520, 180 + numVerMsgSize
+	End If
+End Sub
+
+
+Function TextFromHTML( URL )
+	' Basic routine borrowed from http://dev.remotenetworktechnology.com/wsh/rubegoldberg.htm
+	' Improved wait-until-ready routine for HTAs by McKirahan on
+	' http://support.microsoft.com/newsgroups/default.aspx?dg=microsoft.public.scripting.scriptlets&tid=be461ec2-b444-440c-8155-ad0e8e839ca6&lang=en&cr=US&sloc=en-us&p=1
+
+	Set objIE = CreateObject( "InternetExplorer.Application" )
+ 	objIE.Navigate URL
+	While objIE.Busy
+	Wend
+	TextFromHTML = objIE.Document.Body.InnerText
+	objIE.Quit
+End Function
+
+
+Sub Window_Onload()
+	AppVersion.InnerHTML = GetDate.Version
+	Locale( )
+	numOldDoW     = DatePart( "w",    Now, sysFirstDoW, sysFirstWoY )
+	numOldDay     = DatePart( "d",    Now, sysFirstDoW, sysFirstWoY )
+	numOldMonth   = DatePart( "m",    Now, sysFirstDoW, sysFirstWoY )
+	numOldYear    = DatePart( "yyyy", Now, sysFirstDoW, sysFirstWoY )
+	numOldWeek    = DatePart( "ww",   Now, sysFirstDoW, sysFirstWoY )
+	MyDoW.Value   = numOldDoW
+	MyDay.Value   = numOldDay
+	MyMonth.Value = numOldMonth
+	MyYear.Value  = numOldYear
+	MyWeek.Value  = numOldWeek
+	If InStr( UCase( GetDate.Commandline ), "/DEBUG" ) > 0 Then
+		blnDebug = True
+	Else
+		blnDebug             = False
+		DebugField.InnerHTML = ""
+	End If
+	RestoreWindowSize
+	CheckUpdate( )
+	Debug Now
+End Sub
+
+</script>
+
+<body style="font:12 pt arial; color:white; filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=0, StartColorStr='#0080FF', EndColorStr='#00FFFF')" onresize="RestoreWindowSize()">
+
+<div align="Center">
+
+<span id="Update">&nbsp;</span>
+
+<table border="0">
+<tr>
+    <td><select onchange="HandleDoWChange()" name="MyDoW">
+            <option value="1">maandag</option>
+            <option value="2">dinsdag</option>
+            <option value="3">woensdag</option>
+            <option value="4">donderdag</option>
+            <option value="5">vrijdag</option>
+            <option value="6">zaterdag</option>
+            <option value="7">zondag</option>
+        </select></td>
+    <td><select onchange="HandleDayChange()" name="MyDay">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+        </select></td>
+    <td><select onchange="HandleMonthChange()" name="MyMonth">
+            <option value="1">januari</option>
+            <option value="2">februari</option>
+            <option value="3">maart</option>
+            <option value="4">april</option>
+            <option value="5">mei</option>
+            <option value="6">juni</option>
+            <option value="7">juli</option>
+            <option value="8">augustus</option>
+            <option value="9">september</option>
+            <option value="10">oktober</option>
+            <option value="11">november</option>
+            <option value="12">december</option>
+        </select></td>
+    <td><select onchange="HandleYearChange()" name="MyYear">
+            <option value="2000">2000</option>
+            <option value="2001">2001</option>
+            <option value="2002">2002</option>
+            <option value="2003">2003</option>
+            <option value="2004">2004</option>
+            <option value="2005">2005</option>
+            <option value="2006">2006</option>
+            <option value="2007">2007</option>
+            <option value="2008">2008</option>
+            <option value="2009">2009</option>
+            <option value="2010">2010</option>
+            <option value="2011">2011</option>
+            <option value="2012">2012</option>
+            <option value="2013">2013</option>
+            <option value="2014">2014</option>
+            <option value="2015">2015</option>
+            <option value="2016">2016</option>
+            <option value="2017">2017</option>
+            <option value="2018">2018</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+            <option value="2031">2031</option>
+            <option value="2032">2032</option>
+            <option value="2033">2033</option>
+            <option value="2034">2034</option>
+            <option value="2035">2035</option>
+            <option value="2036">2036</option>
+            <option value="2037">2037</option>
+            <option value="2038">2038</option>
+            <option value="2039">2039</option>
+            <option value="2040">2040</option>
+            <option value="2041">2041</option>
+            <option value="2042">2042</option>
+            <option value="2043">2043</option>
+            <option value="2044">2044</option>
+            <option value="2045">2045</option>
+            <option value="2046">2046</option>
+            <option value="2047">2047</option>
+            <option value="2048">2048</option>
+            <option value="2049">2049</option>
+            <option value="2050">2050</option>
+        </select></td>
+    <td><b>&nbsp;<span id="Week">Week</span>&nbsp;</b></td>
+    <td><select onchange="HandleWeekChange()" name="MyWeek">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+            <option value="32">32</option>
+            <option value="33">33</option>
+            <option value="34">34</option>
+            <option value="35">35</option>
+            <option value="36">36</option>
+            <option value="37">37</option>
+            <option value="38">38</option>
+            <option value="39">39</option>
+            <option value="40">40</option>
+            <option value="41">41</option>
+            <option value="42">42</option>
+            <option value="43">43</option>
+            <option value="44">44</option>
+            <option value="45">45</option>
+            <option value="46">46</option>
+            <option value="47">47</option>
+            <option value="48">48</option>
+            <option value="49">49</option>
+            <option value="50">50</option>
+            <option value="51">51</option>
+            <option value="52">52</option>
+            <option value="53">53</option>
+        </select></td>
+</tr>
+</table>
+
+<span id="DebugField">
+
+<p>&nbsp;</p>
+
+<textarea name="DebugTextArea" rows="10" cols="40"></textarea>
+
+<p>&nbsp;</p>
+
+</span>
+
+<p align="center"><B>GetDate Date Calculator,&nbsp; Version <span id="AppVersion">0.00</span><br>
+<font size="-1">&copy; 2006, Rob van der Woude<br>
+<a href="http://www.robvanderwoude.com/" target="_blank"><font color="Red">http://www.robvanderwoude.com</font></a></font></b></p>
+
+</div>
+
+</body>
+</html>
